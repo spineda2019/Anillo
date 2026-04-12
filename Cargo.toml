@@ -1,0 +1,11 @@
+[package]
+name = "anillo"
+version = "0.0.1"
+edition = "2024"
+authors = ["Sebastian Pineda", "Nicholas Armstrong"]
+license = "GPL-3.0-only"
+description = "Parser (and possibly other things) for the Anillo DSL"
+readme = "README.md"
+repository = "https://github.com/spineda2019/Anillo"
+
+[dependencies]
