@@ -1,0 +1,38 @@
+# See the README for more context around syntax of this grammar (not Anillo
+# itself), such as how whitespace is handled, and how + and * are intended to
+# be interpretted
+
+# An "Anillo" object in its entirety can be considered as a collection of one
+# or more "Ingots", a cheeky play on words.
+Root             := Ingot* eof
+
+Ingot            := ExternalFunction | ISR
+
+ExternalFunction := KEYWORD_EXTERN FunctionDecl RingLevel?
+
+FunctionDecl     := Identifier LEFT_PAREN ArgList* RIGHT_PAREN
+
+Identifier       := [A-Za-z_][A-Za-z0-9_]* SKIP_WHITE
+
+ArgList          := ...
+
+RingLevel        := KEYWORD_RING_LEVEL LEFT_PAREN RingName RIGHT_PAREN
+
+RingName         := KEYWORD_USER | KEYWORD_SUPER
+
+ISR              := KEYWORD_ISR Identifier IsrBody
+
+IsrBody          := ...
+
+
+# Keywords and tokens
+KEYWORD_EXTERN     := 'extern'    SKIP_WHITE
+KEYWORD_RING_LEVEL := 'WithLevel' SKIP_WHITE
+KEYWORD_USER       := 'User'      SKIP_WHITE
+KEYWORD_SUPER      := 'Super'     SKIP_WHITE
+KEYWORD_ISR        := 'isr'       SKIP_WHITE
+LEFT_PAREN         := '('
+LEFT_BRACKET       := '{'
+RIGHT_PAREN        := ')'
+RIGHT_BRACKET      := '}'
+SKIP_WHITE         := ... # We can be exhaustive if we'd like...
