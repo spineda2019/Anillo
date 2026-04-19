@@ -1,8 +1,10 @@
 use argparse::{ArgumentParser, Store};
 mod error;
+mod lexer;
+mod token;
 
-fn main() {
-    let mut input_file: String = String::new();
+fn main() -> std::io::Result<()> {
+    let mut input_file = std::path::PathBuf::new();
     {
         let mut arg_parser: ArgumentParser = ArgumentParser::new();
         arg_parser.set_description("Parse your Anillo file");
@@ -15,8 +17,13 @@ fn main() {
     }
 
     if !input_file.ends_with(".ani") {
-        eprintln!("Not an anillo file ending in '.ani': {}", input_file);
+        eprintln!("Not an anillo file ending in '.ani': {:?}", input_file);
     } else {
-        println!("Input: {}", input_file);
+        println!("Parsing input: {:?}", input_file);
     }
+
+    let mut lexer = lexer::Lexer::new(&input_file)?;
+    let tokens = lexer.tokenize();
+
+    Ok(())
 }
