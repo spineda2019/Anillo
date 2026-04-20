@@ -1,4 +1,8 @@
+use std::{collections::VecDeque, fmt::Display};
+
 use argparse::{ArgumentParser, Store};
+
+use crate::parser::Parser;
 mod error;
 mod lexer;
 mod parser;
@@ -25,8 +29,13 @@ fn main() -> std::io::Result<()> {
 
     let mut lexer = lexer::Lexer::new(&input_file)?;
     let tokens = lexer.tokenize()?;
+    let mut parser = Parser::new(VecDeque::from(tokens));
 
-    dbg!(tokens);
+    dbg!(&parser);
+
+    let ast = parser.run();
+
+    dbg!(&ast);
 
     Ok(())
 }

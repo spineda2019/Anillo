@@ -1,11 +1,49 @@
-use crate::token::Token;
+use std::collections::VecDeque;
 
-struct Parser {
-    tokens: Vec<Token>,
+use crate::token::{Ast, ExternalFunctionNode, Ingot, IsrNode, Token};
+
+#[derive(Debug)]
+pub struct Parser {
+    tokens: VecDeque<Token>,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Parser {
+    pub fn new(tokens: VecDeque<Token>) -> Parser {
         Parser { tokens }
+    }
+
+    pub fn run(&mut self) -> Ast {
+        let mut ast_vec: Vec<Ingot> = Vec::new();
+
+        while let Some(token) = self.tokens.pop_front() {
+            match token {
+                Token::KeywordExtern => {
+                    let ext = self.parse_extern();
+                    ast_vec.push(Ingot::ExternalFunction(ext));
+                }
+                Token::KeywordIsr => {
+                    let isr = self.parse_isr();
+                    ast_vec.push(Ingot::Isr(isr));
+                }
+                other => panic!("Expected the start of an Ingot, got {}", other),
+            }
+        }
+
+        Ast(ast_vec)
+    }
+
+    fn parse_extern(&mut self) -> ExternalFunctionNode {
+        if let Some(Token::Identifier(func_name)) = self.tokens.pop_front()
+            && let Some(Token::LeftParen) = self.tokens.pop_front()
+        {
+            dbg!(&func_name, &self.tokens);
+            todo!();
+        } else {
+            panic!("");
+        }
+    }
+
+    fn parse_isr(&mut self) -> IsrNode {
+        todo!();
     }
 }
