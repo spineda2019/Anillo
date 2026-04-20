@@ -1,6 +1,7 @@
 use argparse::{ArgumentParser, Store};
 mod error;
 mod lexer;
+mod parser;
 mod token;
 
 fn main() -> std::io::Result<()> {
