@@ -1,25 +1,66 @@
-use std::io::Read;
+use std::{io::Read, str::FromStr};
 
-use crate::token;
+use crate::token::{self, Token};
 
 pub struct Lexer {
-    file: std::fs::File,
+    file: std::io::BufReader<std::fs::File>,
 }
 
 impl Lexer {
     pub fn new(path: &std::path::Path) -> std::io::Result<Lexer> {
+        let f = std::fs::File::open(path)?;
         Ok(Lexer {
-            file: std::fs::File::open(path)?,
+            file: std::io::BufReader::new(f),
         })
     }
 
     pub fn tokenize(&mut self) -> std::io::Result<Vec<token::Token>> {
-        let reader: std::io::BufReader<_> = std::io::BufReader::new(&self.file);
-        for letter in reader.bytes() {
-            let letter = letter?;
-            let _ = dbg!(letter as char);
+        let mut tokens: Vec<Token> = Vec::new();
+        let mut buf: [u8; 1] = [0; 1];
+        let mut str_token_buf: Vec<char> = Vec::new();
+
+        while self.file.read_exact(&mut buf).is_ok() {
+            let letter = buf[0] as char;
+            match letter {
+                '(' | '{' | ')' | '}' => {
+                    if !str_token_buf.is_empty() {
+                        let remaining: String = str_token_buf.iter().collect();
+                        str_token_buf.clear();
+                        let tok: Token = Self::parse_str(&remaining);
+                        tokens.push(tok);
+                    }
+                    match letter {
+                        '(' => tokens.push(Token::LeftParen),
+                        '{' => tokens.push(Token::LeftBracket),
+                        ')' => tokens.push(Token::RightParen),
+                        '}' => tokens.push(Token::RightBracket),
+                        _ => unreachable!(),
+                    }
+                }
+                white if white.is_ascii_whitespace() => {
+                    if !str_token_buf.is_empty() {
+                        let str_token: String = str_token_buf.iter().collect();
+                        let tok: Token = Self::parse_str(&str_token);
+                        tokens.push(tok);
+                        str_token_buf.clear();
+                    }
+                }
+                asc if asc.is_ascii_alphabetic() => str_token_buf.push(letter),
+                other => panic!("Unrecognized character type: {}", other),
+            }
         }
 
-        Ok(vec![])
+        Ok(tokens)
+    }
+
+    fn parse_str(tok: &str) -> Token {
+        match tok {
+            "extern" => Token::KeywordExtern,
+            "WithLevel" => Token::KeywordWithLevel,
+            "User" => Token::KeywordUser,
+            "Super" => Token::KeywordSuper,
+            "isr" => Token::KeywordIsr,
+            id => Token::Identifier(String::from_str(id).expect("Invalid str for identifier")),
+        }
     }
 }

@@ -23,7 +23,9 @@ fn main() -> std::io::Result<()> {
     }
 
     let mut lexer = lexer::Lexer::new(&input_file)?;
-    let tokens = lexer.tokenize();
+    let tokens = lexer.tokenize()?;
+
+    dbg!(tokens);
 
     Ok(())
 }

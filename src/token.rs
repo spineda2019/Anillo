@@ -1,6 +1,7 @@
+#[derive(Debug)]
 pub enum Token {
     KeywordExtern,
-    KeywordRingLevel,
+    KeywordWithLevel,
     KeywordUser,
     KeywordSuper,
     KeywordIsr,

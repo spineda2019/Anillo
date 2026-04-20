@@ -1,1 +1,6 @@
 extern Foo()
+
+extern  IHaveWeirdSpaces  (  )
+
+isr KeyboardIsr {
+}
