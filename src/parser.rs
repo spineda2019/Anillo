@@ -37,7 +37,7 @@ impl Parser {
             }
         }
 
-        Ast(ast_vec)
+        Ast::new(ast_vec)
     }
 
     fn parse_extern(&mut self) -> ExternalFunctionNode {
@@ -117,4 +117,17 @@ impl Parser {
         }
         todo!();
     }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn total_parse() {}
+
+    #[test]
+    fn only_externs() {}
+
+    #[test]
+    fn only_isrs() {}
 }

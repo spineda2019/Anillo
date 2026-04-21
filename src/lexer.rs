@@ -94,3 +94,17 @@ impl Lexer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn valid_tokens() {
+        const EXAMPLE: &str = "extern Func()    ";
+    }
+
+    #[test]
+    fn invalid_token() {
+        const EXAMPLE: &str = "extern Func() #$%^";
+    }
+}

@@ -93,4 +93,12 @@ pub enum Ingot {
 }
 
 #[derive(Debug)]
-pub struct Ast(pub Vec<Ingot>);
+pub struct Ast(Vec<Ingot>);
+
+impl Ast {
+    pub fn new(vec: Vec<Ingot>) -> Ast {
+        Ast(vec)
+    }
+
+    pub fn verify(&self) {}
+}
