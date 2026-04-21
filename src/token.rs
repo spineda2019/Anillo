@@ -12,6 +12,7 @@ pub enum Token {
     RightParen,
     LeftBracket,
     RightBracket,
+    Comma,
 }
 
 impl std::fmt::Display for Token {
@@ -27,6 +28,7 @@ impl std::fmt::Display for Token {
             Token::RightParen => write!(f, "Token::RightParen"),
             Token::LeftBracket => write!(f, "Token::LeftBracket"),
             Token::RightBracket => write!(f, "Token::RightBracket"),
+            Token::Comma => write!(f, "Token::Comma"),
         }
     }
 }
@@ -37,19 +39,17 @@ pub enum Ring {
     User,
 }
 
-#[derive(Debug)]
-pub enum FuncArgTypeBitCount {
-    Eight,
-    Sixteen,
-    ThirtyTwo,
-    SixtyFour,
-}
-
-#[derive(Debug)]
-pub struct FuncArgType {
-    /// Some power of 2 in the rang [8-64] inclusive
-    bit_count: FuncArgTypeBitCount,
-    signed: bool,
+/// Some power of 2 in the rang [8-64] inclusive
+#[derive(Debug, Clone, Copy)]
+pub enum FuncArgType {
+    U8,
+    I8,
+    U16,
+    I16,
+    U32,
+    I32,
+    U64,
+    I64,
 }
 
 #[derive(Debug)]
@@ -57,7 +57,13 @@ pub struct FuncArg {
     name: String,
 
     /// `type` is likely reserved by the rust language for use so I can't use the darn name
-    type_T: FuncArgType,
+    type_t: FuncArgType,
+}
+
+impl FuncArg {
+    pub fn new(name: String, type_t: FuncArgType) -> FuncArg {
+        FuncArg { name, type_t }
+    }
 }
 
 #[derive(Debug)]
@@ -65,6 +71,16 @@ pub struct ExternalFunctionNode {
     name: String,
     args: Vec<FuncArg>,
     privilege: Option<Ring>,
+}
+
+impl ExternalFunctionNode {
+    pub fn new(name: String, args: Vec<FuncArg>, privilege: Option<Ring>) -> ExternalFunctionNode {
+        ExternalFunctionNode {
+            name,
+            args,
+            privilege,
+        }
+    }
 }
 
 #[derive(Debug)]

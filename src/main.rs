@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, fmt::Display};
+use std::{collections::VecDeque, ffi::OsStr, fmt::Display};
 
 use argparse::{ArgumentParser, Store};
 
@@ -21,17 +21,27 @@ fn main() -> std::io::Result<()> {
         arg_parser.parse_args_or_exit();
     }
 
-    if !input_file.ends_with(".ani") {
-        eprintln!("Not an anillo file ending in '.ani': {:?}", input_file);
-    } else {
+    if let Some(ext) = input_file.extension()
+        && let Some(ext_str) = ext.to_str()
+        && ext_str == "ani"
+    {
         println!("Parsing input: {:?}", input_file);
+    } else {
+        eprintln!("Not an anillo file ending in '.ani': {:?}", input_file);
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Not an anillo file ending in '.ani'",
+        ));
     }
 
     let mut lexer = lexer::Lexer::new(&input_file)?;
     let tokens = lexer.tokenize()?;
     let mut parser = Parser::new(VecDeque::from(tokens));
 
+    println!("********************************************************************************");
+    println!("Starting token buffer:");
     dbg!(&parser);
+    println!("********************************************************************************");
 
     let ast = parser.run();
 

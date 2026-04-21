@@ -19,10 +19,14 @@ impl Lexer {
         let mut buf: [u8; 1] = [0; 1];
         let mut str_token_buf: Vec<char> = Vec::new();
 
+        let mut line: usize = 1;
+        let mut col: usize = 1;
+
         while self.file.read_exact(&mut buf).is_ok() {
             let letter = buf[0] as char;
             match letter {
                 '(' | '{' | ')' | '}' => {
+                    col += 1;
                     if !str_token_buf.is_empty() {
                         let remaining: String = str_token_buf.iter().collect();
                         str_token_buf.clear();
@@ -37,7 +41,24 @@ impl Lexer {
                         _ => unreachable!(),
                     }
                 }
+                ',' => {
+                    col += 1;
+                    if !str_token_buf.is_empty() {
+                        let str_token: String = str_token_buf.iter().collect();
+                        let tok: Token = Self::parse_str(&str_token);
+                        tokens.push(tok);
+                        str_token_buf.clear();
+                    }
+
+                    tokens.push(Token::Comma);
+                }
                 white if white.is_ascii_whitespace() => {
+                    if white == '\n' {
+                        line += 1;
+                        col = 0;
+                    } else {
+                        col += 1;
+                    }
                     if !str_token_buf.is_empty() {
                         let str_token: String = str_token_buf.iter().collect();
                         let tok: Token = Self::parse_str(&str_token);
@@ -45,8 +66,17 @@ impl Lexer {
                         str_token_buf.clear();
                     }
                 }
-                asc if asc.is_ascii_alphabetic() => str_token_buf.push(letter),
-                other => panic!("Unrecognized character type: {}", other),
+                asc if asc.is_ascii_alphanumeric() => {
+                    col += 1;
+                    str_token_buf.push(letter);
+                }
+                other => {
+                    col += 1;
+                    panic!(
+                        "Unrecognized character type [line {}, col {}]: {}",
+                        line, col, other
+                    );
+                }
             }
         }
 
