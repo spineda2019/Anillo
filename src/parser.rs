@@ -70,10 +70,8 @@ impl Parser {
                             if let Some(token) = self.tokens.front()
                                 && let &Token::KeywordWithLevel = token.borrow_token()
                             {
-                                privilege = match self.tokens.pop_front() {
-                                    None => None,
-                                    _ => todo!(),
-                                };
+                                privilege =
+                                    Some(self.parse_withlevel(lparen.line(), lparen.col())?);
                             }
 
                             // weird rust return expression
@@ -182,6 +180,51 @@ impl Parser {
         }
 
         Ok(args)
+    }
+
+    fn parse_withlevel(
+        &mut self,
+        last_line: u32,
+        last_column: u32,
+    ) -> Result<Ring, CompilationError> {
+        match self.tokens.pop_front() {
+            Some(token) => match token.borrow_token() {
+                Token::KeywordWithLevel => match self.tokens.pop_front() {
+                    Some(lparen) => match lparen.borrow_token() {
+                        Token::LeftParen => match self.tokens.pop_front() {
+                            Some(priv_level) => match priv_level.borrow_token() {
+                                _ => todo!(),
+                            },
+                            None => Err(CompilationError::new(
+                                lparen.line(),
+                                lparen.col(),
+                                String::from("Expected privilege level, found EOF"),
+                            )),
+                        },
+                        other_token => Err(CompilationError::new(
+                            lparen.line(),
+                            lparen.col(),
+                            format!("Expected '(' after WithLevel, found: {}", other_token),
+                        )),
+                    },
+                    None => Err(CompilationError::new(
+                        token.line(),
+                        token.col(),
+                        String::from("Expected '(' after WithLevel, found EOF"),
+                    )),
+                },
+                other_token => Err(CompilationError::new(
+                    token.line(),
+                    token.col(),
+                    format!("Expected 'WithLevel', found: {}", other_token),
+                )),
+            },
+            None => Err(CompilationError::new(
+                last_line,
+                last_column,
+                String::from("Expected 'WithLevel', found EOF"),
+            )),
+        }
     }
 
     fn parse_isr(&mut self) -> IsrNode {

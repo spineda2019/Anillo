@@ -2,8 +2,7 @@
 pub enum Token {
     KeywordExtern,
     KeywordWithLevel,
-    KeywordUser,
-    KeywordSuper,
+    KeywordPrivilege(Ring),
     KeywordIsr,
 
     Identifier(String),
@@ -55,8 +54,7 @@ impl std::fmt::Display for Token {
         match self {
             Token::KeywordExtern => write!(f, "Token::KeywordExtern"),
             Token::KeywordWithLevel => write!(f, "Token::KeywordWithLevel"),
-            Token::KeywordUser => write!(f, "Token::KeywordUser"),
-            Token::KeywordSuper => write!(f, "Token::KeywordSuper"),
+            Token::KeywordPrivilege(p) => write!(f, "Token::KeywordPrivilege({})", p),
             Token::KeywordIsr => write!(f, "Token::KeywordIsr"),
             Token::Identifier(id) => write!(f, "Token::Identifier({})", id),
             Token::LeftParen => write!(f, "Token::LeftParen"),
@@ -72,6 +70,19 @@ impl std::fmt::Display for Token {
 pub enum Ring {
     Super,
     User,
+}
+
+impl std::fmt::Display for Ring {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Ring::({})",
+            match self {
+                Ring::User => "User",
+                Ring::Super => "Super",
+            }
+        )
+    }
 }
 
 /// Some power of 2 in the rang [8-64] inclusive

@@ -1,8 +1,8 @@
-use std::{collections::VecDeque, error::Error, fmt::format, io::Read, str::FromStr};
+use std::{collections::VecDeque, error::Error, io::Read, str::FromStr};
 
 use crate::{
     error::CompilationError,
-    token::{self, Token, TokenInfo},
+    token::{Ring, Token, TokenInfo},
 };
 
 pub struct Lexer {
@@ -93,8 +93,8 @@ impl Lexer {
         match tok {
             "extern" => Token::KeywordExtern,
             "WithLevel" => Token::KeywordWithLevel,
-            "User" => Token::KeywordUser,
-            "Super" => Token::KeywordSuper,
+            "User" => Token::KeywordPrivilege(Ring::User),
+            "Super" => Token::KeywordPrivilege(Ring::Super),
             "isr" => Token::KeywordIsr,
             id => Token::Identifier(String::from_str(id).expect("Invalid str for identifier")),
         }
