@@ -1,18 +1,23 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, error::Error, fmt::format};
 
-use crate::token::{Ast, ExternalFunctionNode, FuncArg, FuncArgType, Ingot, IsrNode, Ring, Token};
+use crate::{
+    error::CompilationError,
+    token::{
+        Ast, ExternalFunctionNode, FuncArg, FuncArgType, Ingot, IsrNode, Ring, Token, TokenInfo,
+    },
+};
 
 #[derive(Debug)]
 pub struct Parser {
-    tokens: VecDeque<Token>,
+    tokens: VecDeque<TokenInfo>,
 }
 
 impl Parser {
-    pub fn new(tokens: VecDeque<Token>) -> Parser {
+    pub fn new(tokens: VecDeque<TokenInfo>) -> Parser {
         Parser { tokens }
     }
 
-    pub fn run(&mut self) -> Ast {
+    pub fn run(&mut self) -> Result<Ast, Box<dyn Error>> {
         let mut ast_vec: Vec<Ingot> = Vec::new();
 
         while let Some(token) = self.tokens.pop_front() {
@@ -24,43 +29,93 @@ impl Parser {
             dbg!(&ast_vec);
             println!();
             println!("###########################################################################");
-            match token {
+
+            match token.borrow_token() {
                 Token::KeywordExtern => {
-                    let ext = self.parse_extern();
+                    let ext = self.parse_extern(token.line(), token.col())?;
                     ast_vec.push(Ingot::ExternalFunction(ext));
                 }
                 Token::KeywordIsr => {
                     let isr = self.parse_isr();
                     ast_vec.push(Ingot::Isr(isr));
                 }
-                other => panic!("Expected the start of an Ingot, got {}", other),
+                other => {
+                    return Err(Box::new(CompilationError::new(
+                        token.line(),
+                        token.col(),
+                        format!("Expected the start of an Ingot, got {}", other),
+                    )));
+                }
             }
         }
 
-        Ast::new(ast_vec)
+        Ok(Ast::new(ast_vec))
     }
 
-    fn parse_extern(&mut self) -> ExternalFunctionNode {
-        if let Some(Token::Identifier(func_name)) = self.tokens.pop_front()
-            && let Some(Token::LeftParen) = self.tokens.pop_front()
-        {
-            // We're lucky we have chained let binding now. IIRC this was unstable for a bit
+    fn parse_extern(
+        &mut self,
+        last_line: u32,
+        last_col: u32,
+    ) -> Result<ExternalFunctionNode, CompilationError> {
+        match self.tokens.pop_front() {
+            // found something, need to see if it's a func
+            Some(func) => match func.borrow_token() {
+                // found a func name, need to see if '(' is next
+                Token::Identifier(func_name) => match self.tokens.pop_front() {
+                    // found something, need to see if it's '('
+                    Some(lparen) => match lparen.borrow_token() {
+                        Token::LeftParen => {
+                            let args = self.parse_func_args()?;
+                            let mut privilege: Option<Ring> = None;
+                            if let Some(token) = self.tokens.front()
+                                && let &Token::KeywordWithLevel = token.borrow_token()
+                            {
+                                privilege = match self.tokens.pop_front() {
+                                    None => None,
+                                    _ => todo!(),
+                                };
+                            }
 
-            let args = self.parse_func_args();
-            let mut privilege: Option<Ring> = None;
-            if let Some(&Token::KeywordWithLevel) = self.tokens.front() {
-                privilege = match self.tokens.pop_front() {
-                    None => None,
-                    _ => todo!(),
-                };
-            }
-            return ExternalFunctionNode::new(func_name, args, privilege);
-        } else {
-            panic!("Message TBD");
+                            // weird rust return expression
+                            Ok(ExternalFunctionNode::new(
+                                func_name.clone(),
+                                args,
+                                privilege,
+                            ))
+                        }
+                        other_token => Err(CompilationError::new(
+                            lparen.line(),
+                            lparen.col(),
+                            format!(
+                                "Expected '(' after extern declaration, found: {}",
+                                other_token
+                            ),
+                        )),
+                    },
+                    None => Err(CompilationError::new(
+                        func.line(),
+                        func.col(),
+                        String::from("Expected '(' after extern declaration, found EOF"),
+                    )),
+                },
+                other_token => Err(CompilationError::new(
+                    func.line(),
+                    func.col(),
+                    format!(
+                        "Expected function name after extern declaration, found: {}",
+                        other_token
+                    ),
+                )),
+            },
+            None => Err(CompilationError::new(
+                last_line,
+                last_col,
+                String::from("Expected function name after extern declaration, found EOF"),
+            )),
         }
     }
 
-    fn parse_func_args(&mut self) -> Vec<FuncArg> {
+    fn parse_func_args(&mut self) -> Result<Vec<FuncArg>, CompilationError> {
         #[derive(Clone, Copy)]
         enum SeekState {
             Start,
@@ -73,10 +128,14 @@ impl Parser {
         let mut type_t: FuncArgType = FuncArgType::U8;
 
         while let Some(token) = self.tokens.pop_front() {
-            match (token, state) {
+            match (token.borrow_token(), state) {
                 (Token::RightParen, SeekState::SeekType | SeekState::Start) => break,
                 (Token::RightParen, SeekState::SeekArg) => {
-                    panic!("Expected arg name for function argument, found ')'")
+                    return Err(CompilationError::new(
+                        token.line(),
+                        token.col(),
+                        String::from("Expected arg name for function argument, found ')'"),
+                    ));
                 }
                 (Token::Identifier(type_str), SeekState::SeekType | SeekState::Start) => {
                     type_t = match type_str.as_str() {
@@ -88,29 +147,47 @@ impl Parser {
                         "i32" => FuncArgType::I32,
                         "u64" => FuncArgType::U64,
                         "i64" => FuncArgType::I64,
-                        other => panic!("Invalid c type: {}", other),
+                        other => {
+                            return Err(CompilationError::new(
+                                token.line(),
+                                token.col(),
+                                format!("Invalid c type: {}", other),
+                            ));
+                        }
                     };
 
                     state = SeekState::SeekArg;
                 }
-                (Token::Comma, SeekState::Start) => panic!("Expected ')' or fun arg, got ','"),
+                (Token::Comma, SeekState::Start) => {
+                    return Err(CompilationError::new(
+                        token.line(),
+                        token.col(),
+                        String::from("Expected ')' or fun arg, got ','"),
+                    ));
+                }
                 (Token::Comma, SeekState::SeekType) => continue,
                 (Token::Comma, SeekState::SeekArg) => continue,
                 (Token::Identifier(arg), SeekState::SeekArg) => {
                     state = SeekState::SeekType;
-                    args.push(FuncArg::new(arg, type_t));
+                    args.push(FuncArg::new(arg.clone(), type_t));
                 }
                 (unexpected, _) => {
-                    panic!("Unexpected token while parsing func_args: {}", unexpected)
+                    return Err(CompilationError::new(
+                        token.line(),
+                        token.col(),
+                        format!("Unexpected token while parsing func_args: {}", unexpected),
+                    ));
                 }
             }
         }
 
-        args
+        Ok(args)
     }
 
     fn parse_isr(&mut self) -> IsrNode {
-        if let Some(Token::LeftBracket) = self.tokens.pop_front() {
+        if let Some(token) = self.tokens.pop_front()
+            && let Token::LeftBracket = token.borrow_token()
+        {
             println!("TODO! ISR Body parsing");
         } else {
             panic!("Expected left bracket after ISR definition");

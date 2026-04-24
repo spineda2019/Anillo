@@ -1,8 +1,8 @@
-use std::{error::Error, fmt::format, io::Read, str::FromStr};
+use std::{collections::VecDeque, error::Error, fmt::format, io::Read, str::FromStr};
 
 use crate::{
     error::CompilationError,
-    token::{self, Token},
+    token::{self, Token, TokenInfo},
 };
 
 pub struct Lexer {
@@ -17,8 +17,8 @@ impl Lexer {
         })
     }
 
-    pub fn tokenize(&mut self) -> Result<Vec<token::Token>, Box<dyn Error>> {
-        let mut tokens: Vec<Token> = Vec::new();
+    pub fn tokenize(&mut self) -> Result<VecDeque<TokenInfo>, Box<dyn Error>> {
+        let mut tokens: VecDeque<TokenInfo> = VecDeque::new();
         let mut buf: [u8; 1] = [0; 1];
         let mut str_token_buf: Vec<char> = Vec::new();
 
@@ -34,26 +34,28 @@ impl Lexer {
                         let remaining: String = str_token_buf.iter().collect();
                         str_token_buf.clear();
                         let tok: Token = Self::parse_str(&remaining);
-                        tokens.push(tok);
+                        tokens.push_back(TokenInfo::new(tok, line, col));
                     }
-                    match letter {
-                        '(' => tokens.push(Token::LeftParen),
-                        '{' => tokens.push(Token::LeftBracket),
-                        ')' => tokens.push(Token::RightParen),
-                        '}' => tokens.push(Token::RightBracket),
+                    let tok: Token = match letter {
+                        '(' => Token::LeftParen,
+                        '{' => Token::LeftBracket,
+                        ')' => Token::RightParen,
+                        '}' => Token::RightBracket,
                         _ => unreachable!(),
-                    }
+                    };
+
+                    tokens.push_back(TokenInfo::new(tok, line, col));
                 }
                 ',' => {
                     col += 1;
                     if !str_token_buf.is_empty() {
                         let str_token: String = str_token_buf.iter().collect();
                         let tok: Token = Self::parse_str(&str_token);
-                        tokens.push(tok);
+                        tokens.push_back(TokenInfo::new(tok, line, col));
                         str_token_buf.clear();
                     }
 
-                    tokens.push(Token::Comma);
+                    tokens.push_back(TokenInfo::new(Token::Comma, line, col));
                 }
                 white if white.is_ascii_whitespace() => {
                     if white == '\n' {
@@ -65,7 +67,7 @@ impl Lexer {
                     if !str_token_buf.is_empty() {
                         let str_token: String = str_token_buf.iter().collect();
                         let tok: Token = Self::parse_str(&str_token);
-                        tokens.push(tok);
+                        tokens.push_back(TokenInfo::new(tok, line, col));
                         str_token_buf.clear();
                     }
                 }

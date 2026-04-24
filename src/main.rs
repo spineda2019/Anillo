@@ -9,6 +9,8 @@ mod token;
 
 use parser::Parser;
 
+use crate::token::TokenInfo;
+
 fn main() -> Result<(), Box<dyn Error>> {
     let mut input_file = std::path::PathBuf::new();
     {
@@ -36,8 +38,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let mut lexer = lexer::Lexer::new(&input_file)?;
-    let tokens = lexer.tokenize()?;
-    let mut parser = Parser::new(VecDeque::from(tokens));
+    let tokens: VecDeque<TokenInfo> = lexer.tokenize()?;
+    let mut parser = Parser::new(tokens);
 
     println!("********************************************************************************");
     println!("Starting token buffer:");
