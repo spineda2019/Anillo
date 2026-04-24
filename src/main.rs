@@ -1,14 +1,15 @@
-use std::{collections::VecDeque, ffi::OsStr, fmt::Display};
+use std::{collections::VecDeque, error::Error};
 
 use argparse::{ArgumentParser, Store};
 
-use crate::parser::Parser;
 mod error;
 mod lexer;
 mod parser;
 mod token;
 
-fn main() -> std::io::Result<()> {
+use parser::Parser;
+
+fn main() -> Result<(), Box<dyn Error>> {
     let mut input_file = std::path::PathBuf::new();
     {
         let mut arg_parser: ArgumentParser = ArgumentParser::new();
@@ -28,10 +29,10 @@ fn main() -> std::io::Result<()> {
         println!("Parsing input: {:?}", input_file);
     } else {
         eprintln!("Not an anillo file ending in '.ani': {:?}", input_file);
-        return Err(std::io::Error::new(
+        return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
             "Not an anillo file ending in '.ani'",
-        ));
+        )));
     }
 
     let mut lexer = lexer::Lexer::new(&input_file)?;

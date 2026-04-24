@@ -1,6 +1,9 @@
-use std::{io::Read, str::FromStr};
+use std::{error::Error, fmt::format, io::Read, str::FromStr};
 
-use crate::token::{self, Token};
+use crate::{
+    error::CompilationError,
+    token::{self, Token},
+};
 
 pub struct Lexer {
     file: std::io::BufReader<std::fs::File>,
@@ -14,13 +17,13 @@ impl Lexer {
         })
     }
 
-    pub fn tokenize(&mut self) -> std::io::Result<Vec<token::Token>> {
+    pub fn tokenize(&mut self) -> Result<Vec<token::Token>, Box<dyn Error>> {
         let mut tokens: Vec<Token> = Vec::new();
         let mut buf: [u8; 1] = [0; 1];
         let mut str_token_buf: Vec<char> = Vec::new();
 
-        let mut line: usize = 1;
-        let mut col: usize = 1;
+        let mut line: u32 = 1;
+        let mut col: u32 = 1;
 
         while self.file.read_exact(&mut buf).is_ok() {
             let letter = buf[0] as char;
@@ -72,10 +75,11 @@ impl Lexer {
                 }
                 other => {
                     col += 1;
-                    panic!(
-                        "Unrecognized character type [line {}, col {}]: {}",
-                        line, col, other
-                    );
+                    return Err(Box::new(CompilationError::new(
+                        line,
+                        col,
+                        format!("Unrecognized character type: {}", other),
+                    )));
                 }
             }
         }
