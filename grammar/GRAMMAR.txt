@@ -8,21 +8,29 @@ Root             := Ingot* eof
 
 Ingot            := ExternalFunction | ISR
 
-ExternalFunction := KEYWORD_EXTERN FunctionDecl RingLevel?
+ExternalFunction := SKIP_WHITE KEYWORD_EXTERN FunctionDecl RingLevel?
 
 FunctionDecl     := Identifier LEFT_PAREN ArgList* RIGHT_PAREN
 
-Identifier       := [A-Za-z_][A-Za-z0-9_]* SKIP_WHITE
+Identifier       := SKIP_WHITE [A-Za-z_][A-Za-z0-9_]* SKIP_WHITE
 
-ArgList          := ...
+ArgList          := SKIP_WHITE CType SKIP_WHITE Identifier RemainingList*
+RemainingList    := SKIP_WHITE COMMA ArgList
 
 RingLevel        := KEYWORD_RING_LEVEL LEFT_PAREN RingName RIGHT_PAREN
 
 RingName         := KEYWORD_USER | KEYWORD_SUPER
 
-ISR              := KEYWORD_ISR Identifier IsrBody
+ISR              := SKIP_WHITE KEYWORD_ISR Identifier IsrID RingLevel? IsrBody
 
-IsrBody          := ...
+IsrID            := SKIP_WHITE LEFT_PARENT SKIPWHITE [0-255] SKIPWHITE RIGHT_PAREN SKIP_WHITE
+
+IsrBody          := SKIP_WHITE LEFT_BRACKET SKIP_WHITE CallExpression*
+
+CallExpression   := KEYWORD_CALL Identifier LEFT_PAREN ArgValList* RIGHT_PAREN
+
+ArgValList       := Identifier SKIP_WHITE RemainingAVList*
+RemainingAVList  := COMMA SKIP_WHITE ArgValList
 
 
 # Keywords and tokens
@@ -31,8 +39,10 @@ KEYWORD_RING_LEVEL := 'WithLevel' SKIP_WHITE
 KEYWORD_USER       := 'User'      SKIP_WHITE
 KEYWORD_SUPER      := 'Super'     SKIP_WHITE
 KEYWORD_ISR        := 'isr'       SKIP_WHITE
+KEYWORD_CALL       := 'call'      SKIP_WHITE
 LEFT_PAREN         := '('
 LEFT_BRACKET       := '{'
 RIGHT_PAREN        := ')'
 RIGHT_BRACKET      := '}'
+COMMA              := ','
 SKIP_WHITE         := ... # We can be exhaustive if we'd like...
