@@ -193,7 +193,31 @@ impl Parser {
                     Some(lparen) => match lparen.borrow_token() {
                         Token::LeftParen => match self.tokens.pop_front() {
                             Some(priv_level) => match priv_level.borrow_token() {
-                                _ => todo!(),
+                                Token::KeywordPrivilege(level) => match self.tokens.pop_front() {
+                                    Some(token) => match token.borrow_token() {
+                                        Token::RightParen => Ok(*level),
+                                        other_token => Err(CompilationError::new(
+                                            token.line(),
+                                            token.col(),
+                                            format!(
+                                                "Expected ')' after privilege level, found {}",
+                                                other_token
+                                            ),
+                                        )),
+                                    },
+                                    None => Err(CompilationError::new(
+                                        priv_level.line(),
+                                        priv_level.col(),
+                                        String::from(
+                                            "Expected ')' after privilege level, found EOF",
+                                        ),
+                                    )),
+                                },
+                                other_token => Err(CompilationError::new(
+                                    priv_level.line(),
+                                    priv_level.col(),
+                                    format!("Expected privilege level, found: {}", other_token),
+                                )),
                             },
                             None => Err(CompilationError::new(
                                 lparen.line(),

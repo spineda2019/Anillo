@@ -66,7 +66,7 @@ impl std::fmt::Display for Token {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Ring {
     Super,
     User,
