@@ -4,6 +4,7 @@ pub enum Token {
     KeywordWithLevel,
     KeywordPrivilege(Ring),
     KeywordIsr,
+    KeywordCall,
 
     Identifier(String),
 
@@ -12,6 +13,9 @@ pub enum Token {
     LeftBracket,
     RightBracket,
     Comma,
+    /// '$' is a special Anillo token only allowed within an ISR. It directly
+    /// refers to the number of the ISR itself.
+    Dollar,
 }
 
 #[derive(Debug)]
@@ -62,6 +66,8 @@ impl std::fmt::Display for Token {
             Token::LeftBracket => write!(f, "Token::LeftBracket"),
             Token::RightBracket => write!(f, "Token::RightBracket"),
             Token::Comma => write!(f, "Token::Comma"),
+            Token::Dollar => write!(f, "Token::Dollar"),
+            Token::KeywordCall => write!(f, "Token::KeywordCall"),
         }
     }
 }
@@ -130,7 +136,46 @@ impl ExternalFunctionNode {
 }
 
 #[derive(Debug)]
-pub struct IsrNode {}
+pub enum CallArg {
+    Var(String),
+    Dollar,
+}
+
+#[derive(Debug)]
+pub struct ExternalFunctionCall {
+    name: String,
+    args: Vec<CallArg>,
+}
+
+impl ExternalFunctionCall {
+    pub fn new(name: String, args: Vec<CallArg>) -> ExternalFunctionCall {
+        ExternalFunctionCall { name, args }
+    }
+}
+
+#[derive(Debug)]
+pub struct IsrNode {
+    name: String,
+    id: u8,
+    privilege: Option<Ring>,
+    calling_func: Option<ExternalFunctionCall>,
+}
+
+impl IsrNode {
+    pub fn new(
+        name: String,
+        id: u8,
+        privilege: Option<Ring>,
+        calling_func: Option<ExternalFunctionCall>,
+    ) -> IsrNode {
+        IsrNode {
+            name,
+            id,
+            privilege,
+            calling_func,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub enum Ingot {

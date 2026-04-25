@@ -1,9 +1,10 @@
-use std::{collections::VecDeque, error::Error, fmt::format};
+use std::{collections::VecDeque, error::Error};
 
 use crate::{
     error::CompilationError,
     token::{
-        Ast, ExternalFunctionNode, FuncArg, FuncArgType, Ingot, IsrNode, Ring, Token, TokenInfo,
+        Ast, CallArg, ExternalFunctionCall, ExternalFunctionNode, FuncArg, FuncArgType, Ingot,
+        IsrNode, Ring, Token, TokenInfo,
     },
 };
 
@@ -36,7 +37,7 @@ impl Parser {
                     ast_vec.push(Ingot::ExternalFunction(ext));
                 }
                 Token::KeywordIsr => {
-                    let isr = self.parse_isr();
+                    let isr: IsrNode = self.parse_isr(token.line(), token.col())?;
                     ast_vec.push(Ingot::Isr(isr));
                 }
                 other => {
@@ -251,15 +252,247 @@ impl Parser {
         }
     }
 
-    fn parse_isr(&mut self) -> IsrNode {
-        if let Some(token) = self.tokens.pop_front()
-            && let Token::LeftBracket = token.borrow_token()
-        {
-            println!("TODO! ISR Body parsing");
-        } else {
-            panic!("Expected left bracket after ISR definition");
+    fn parse_isr(&mut self, last_line: u32, last_column: u32) -> Result<IsrNode, CompilationError> {
+        match self.tokens.pop_front() {
+            Some(name) => match name.borrow_token() {
+                Token::Identifier(isr_name) => match self.tokens.pop_front() {
+                    Some(lparen) => match lparen.borrow_token() {
+                        Token::LeftParen => match self.tokens.pop_front() {
+                            Some(num) => match num.borrow_token() {
+                                Token::Identifier(isr_num_str) => {
+                                    // Isr Numbers above 255 are rare to my knowledge
+                                    match isr_num_str.parse::<u8>() {
+                                        Ok(isr_num) => match self.tokens.pop_front() {
+                                            Some(rparen) => match rparen.borrow_token() {
+                                                Token::RightParen => {
+                                                    let mut privilege: Option<Ring> = None;
+                                                    if let Some(token) = self.tokens.front()
+                                                        && let Token::KeywordWithLevel =
+                                                            token.borrow_token()
+                                                    {
+                                                        privilege = Some(self.parse_withlevel(
+                                                            num.line(),
+                                                            num.col(),
+                                                        )?);
+                                                    }
+
+                                                    let calling_func =
+                                                        self.parse_isr_body(num.line(), num.col())?;
+                                                    Ok(IsrNode::new(
+                                                        isr_name.clone(),
+                                                        isr_num,
+                                                        privilege,
+                                                        calling_func,
+                                                    ))
+                                                }
+                                                other_token => Err(CompilationError::new(
+                                                    rparen.line(),
+                                                    rparen.col(),
+                                                    format!(
+                                                        "Expected closing ')', found: {}",
+                                                        other_token
+                                                    ),
+                                                )),
+                                            },
+                                            None => Err(CompilationError::new(
+                                                num.line(),
+                                                num.col(),
+                                                String::from("Expected closing ')', found EOF"),
+                                            )),
+                                        },
+                                        Err(e) => Err(CompilationError::new(
+                                            num.line(),
+                                            num.col(),
+                                            format!("Expected numeric value, failed with: {}", e),
+                                        )),
+                                    }
+                                }
+                                other_token => Err(CompilationError::new(
+                                    num.line(),
+                                    num.col(),
+                                    format!("Expected an Isr number, found: {}", other_token),
+                                )),
+                            },
+                            None => Err(CompilationError::new(
+                                lparen.line(),
+                                lparen.col(),
+                                String::from(""),
+                            )),
+                        },
+                        other_token => Err(CompilationError::new(
+                            lparen.line(),
+                            lparen.col(),
+                            format!("Expected '(' after Isr name, found: {}", other_token),
+                        )),
+                    },
+                    None => Err(CompilationError::new(
+                        name.line(),
+                        name.col(),
+                        String::from("Expected '(' after Isr name, found EOF"),
+                    )),
+                },
+                other_token => Err(CompilationError::new(
+                    name.line(),
+                    name.col(),
+                    format!("Expected ISR name, found: {}", other_token),
+                )),
+            },
+            None => Err(CompilationError::new(
+                last_line,
+                last_column,
+                String::from("Expected ISR name, found EOF"),
+            )),
         }
-        todo!();
+    }
+
+    fn parse_isr_body(
+        &mut self,
+        last_line: u32,
+        last_column: u32,
+    ) -> Result<Option<ExternalFunctionCall>, CompilationError> {
+        match self.tokens.pop_front() {
+            Some(lbracket) => match lbracket.borrow_token() {
+                Token::LeftBracket => match self.tokens.pop_front() {
+                    Some(remaining) => match remaining.borrow_token() {
+                        Token::KeywordCall => Ok(Some(
+                            self.parse_function_call(remaining.line(), remaining.col())?,
+                        )),
+                        Token::RightBracket => Ok(None),
+                        other => Err(CompilationError::new(
+                            remaining.line(),
+                            remaining.col(),
+                            format!("Expected call expression or closing '}}', found: {}", other),
+                        )),
+                    },
+                    None => Err(CompilationError::new(
+                        lbracket.line(),
+                        lbracket.col(),
+                        String::from("Expected call expression or closing '}', found EOF"),
+                    )),
+                },
+                other_token => Err(CompilationError::new(
+                    lbracket.line(),
+                    lbracket.col(),
+                    format!("Expected opening '{{', found: {}", other_token),
+                )),
+            },
+            None => Err(CompilationError::new(
+                last_line,
+                last_column,
+                String::from("Expected opening '{', found EOF"),
+            )),
+        }
+    }
+
+    fn parse_function_call(
+        &mut self,
+        last_line: u32,
+        last_col: u32,
+    ) -> Result<ExternalFunctionCall, CompilationError> {
+        #[derive(Clone, Copy)]
+        enum SeekState {
+            Start,
+            SeekArg,
+            SeekComma,
+        }
+
+        match self.tokens.pop_front() {
+            Some(func) => match func.borrow_token() {
+                Token::Identifier(func_name) => match self.tokens.pop_front() {
+                    Some(lparen) => match lparen.borrow_token() {
+                        Token::LeftParen => {
+                            let mut args: Vec<CallArg> = Vec::new();
+                            let mut state: SeekState = SeekState::Start;
+
+                            while let Some(token) = self.tokens.pop_front() {
+                                match (token.borrow_token(), state) {
+                                    (
+                                        Token::RightParen,
+                                        SeekState::Start | SeekState::SeekComma,
+                                    ) => break,
+                                    (Token::RightParen, SeekState::SeekArg) => {
+                                        return Err(CompilationError::new(
+                                            token.line(),
+                                            token.col(),
+                                            String::from("Expected argument, found ')'"),
+                                        ));
+                                    }
+                                    (Token::Identifier(arg), SeekState::SeekArg) => {
+                                        args.push(CallArg::Var(arg.clone()));
+                                        state = SeekState::SeekComma;
+                                    }
+                                    (Token::Dollar, SeekState::Start | SeekState::SeekArg) => {
+                                        args.push(CallArg::Dollar);
+                                        state = SeekState::SeekComma;
+                                    }
+                                    (unexpected, SeekState::Start | SeekState::SeekArg) => {
+                                        return Err(CompilationError::new(
+                                            token.line(),
+                                            token.col(),
+                                            format!(
+                                                "Unexpected token in call expression: {}",
+                                                unexpected
+                                            ),
+                                        ));
+                                    }
+                                    (Token::Comma, SeekState::SeekComma) => {
+                                        state = SeekState::SeekArg;
+                                    }
+                                    (unexpected, SeekState::SeekComma) => {
+                                        return Err(CompilationError::new(
+                                            token.line(),
+                                            token.col(),
+                                            format!(
+                                                "Unexpected token in call expression: {}",
+                                                unexpected
+                                            ),
+                                        ));
+                                    }
+                                }
+                            }
+
+                            match self.tokens.pop_front() {
+                                Some(rbracket) => match rbracket.borrow_token() {
+                                    Token::RightBracket => {
+                                        Ok(ExternalFunctionCall::new(func_name.clone(), args))
+                                    }
+                                    other => Err(CompilationError::new(
+                                        rbracket.line(),
+                                        rbracket.col(),
+                                        format!("Expected '}}', found: {}", other),
+                                    )),
+                                },
+                                None => Err(CompilationError::new(
+                                    func.line(),
+                                    func.col(),
+                                    String::from("Expected '}', found EOF"),
+                                )),
+                            }
+                        }
+                        other => Err(CompilationError::new(
+                            lparen.line(),
+                            lparen.col(),
+                            format!("Expected '(', found: {}", other),
+                        )),
+                    },
+                    None => Err(CompilationError::new(
+                        func.line(),
+                        func.col(),
+                        String::from("Expected '(', found EOF"),
+                    )),
+                },
+                other => Err(CompilationError::new(
+                    func.line(),
+                    func.col(),
+                    format!("Expected function name, found: {}", other),
+                )),
+            },
+            None => Err(CompilationError::new(
+                last_line,
+                last_col,
+                String::from("Expected function name, found EOF"),
+            )),
+        }
     }
 }
 

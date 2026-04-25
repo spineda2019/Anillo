@@ -60,6 +60,11 @@ impl Lexer {
                     drain_if_needed!();
                     tokens.push_back(TokenInfo::new(Token::Comma, line, col));
                 }
+                '$' => {
+                    col += 1;
+                    drain_if_needed!();
+                    tokens.push_back(TokenInfo::new(Token::Dollar, line, col));
+                }
                 white if white.is_ascii_whitespace() => {
                     if white == '\n' {
                         line += 1;
@@ -94,6 +99,7 @@ impl Lexer {
             "User" => Token::KeywordPrivilege(Ring::User),
             "Super" => Token::KeywordPrivilege(Ring::Super),
             "isr" => Token::KeywordIsr,
+            "call" => Token::KeywordCall,
             id => Token::Identifier(String::from_str(id).expect("Invalid str for identifier")),
         }
     }
