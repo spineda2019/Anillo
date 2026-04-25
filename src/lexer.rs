@@ -25,17 +25,26 @@ impl Lexer {
         let mut line: u32 = 1;
         let mut col: u32 = 1;
 
+        // Many conditions can trigger a "drain" of our current raw char-form
+        // token buffer. This is just a macro that wraps up the repetitive
+        // code into a single call.
+        macro_rules! drain_if_needed {
+            () => {
+                if !str_token_buf.is_empty() {
+                    let remaining: String = str_token_buf.iter().collect();
+                    str_token_buf.clear();
+                    let tok: Token = Self::parse_str(&remaining);
+                    tokens.push_back(TokenInfo::new(tok, line, col));
+                }
+            };
+        }
+
         while self.file.read_exact(&mut buf).is_ok() {
             let letter = buf[0] as char;
             match letter {
                 '(' | '{' | ')' | '}' => {
                     col += 1;
-                    if !str_token_buf.is_empty() {
-                        let remaining: String = str_token_buf.iter().collect();
-                        str_token_buf.clear();
-                        let tok: Token = Self::parse_str(&remaining);
-                        tokens.push_back(TokenInfo::new(tok, line, col));
-                    }
+                    drain_if_needed!();
                     let tok: Token = match letter {
                         '(' => Token::LeftParen,
                         '{' => Token::LeftBracket,
@@ -48,13 +57,7 @@ impl Lexer {
                 }
                 ',' => {
                     col += 1;
-                    if !str_token_buf.is_empty() {
-                        let str_token: String = str_token_buf.iter().collect();
-                        let tok: Token = Self::parse_str(&str_token);
-                        tokens.push_back(TokenInfo::new(tok, line, col));
-                        str_token_buf.clear();
-                    }
-
+                    drain_if_needed!();
                     tokens.push_back(TokenInfo::new(Token::Comma, line, col));
                 }
                 white if white.is_ascii_whitespace() => {
@@ -64,12 +67,7 @@ impl Lexer {
                     } else {
                         col += 1;
                     }
-                    if !str_token_buf.is_empty() {
-                        let str_token: String = str_token_buf.iter().collect();
-                        let tok: Token = Self::parse_str(&str_token);
-                        tokens.push_back(TokenInfo::new(tok, line, col));
-                        str_token_buf.clear();
-                    }
+                    drain_if_needed!();
                 }
                 asc if asc.is_ascii_alphanumeric() => {
                     col += 1;
