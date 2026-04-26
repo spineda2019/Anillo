@@ -1,0 +1,5 @@
+extern GenericPicHandler(u8 irq) WithLevel(Super)
+
+isr PicKeyboardIsr( 16 ) WithLevel(User) {
+    call GenericPicHandler($)
+}
