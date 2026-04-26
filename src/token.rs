@@ -194,7 +194,8 @@ pub enum FuncArgType {
 
 #[derive(Debug)]
 pub struct FuncArg {
-    name: String,
+    /// TODO(SEP): Do something with the func arg name when we have arbitrary arg usage
+    _name: String,
 
     /// `type` is likely reserved by the rust language for use so I can't use the darn name
     type_t: FuncArgType,
@@ -202,7 +203,10 @@ pub struct FuncArg {
 
 impl FuncArg {
     pub fn new(name: String, type_t: FuncArgType) -> FuncArg {
-        FuncArg { name, type_t }
+        FuncArg {
+            _name: name,
+            type_t,
+        }
     }
 }
 
@@ -323,8 +327,8 @@ impl Ast {
                             [callee] => {
                                 if callee.args.len() != callsite.args.len() {
                                     return Err(CompilationError::new_without_src_info(format!(
-                                        "Mismatched arg count between definition and usage of {} within isr {}",
-                                        callee.name, isr.name
+                                        "Mismatched arg count between definition and usage of {} within isr {}({})",
+                                        callee.name, isr.name, isr.id
                                     )));
                                 }
 
@@ -342,8 +346,8 @@ impl Ast {
                                         (FuncArgType::I8, CallArg::Dollar) => {
                                             return Err(CompilationError::new_without_src_info(
                                                 format!(
-                                                    "At callsite of {} in isr {}: '$' (AKA U8) not safely convertable to I8",
-                                                    callee.name, isr.name,
+                                                    "At callsite of {} in isr {}({}): '$' (AKA U8) not safely convertable to I8",
+                                                    callee.name, isr.name, isr.name
                                                 ),
                                             ));
                                         }
@@ -351,8 +355,8 @@ impl Ast {
                                         (_, CallArg::Var(var)) => {
                                             return Err(CompilationError::new_without_src_info(
                                                 format!(
-                                                    "At callsite of {} in isr {}: arbitrary variable expressions ({}) not yet supported",
-                                                    callee.name, isr.name, var
+                                                    "At callsite of {} in isr {}{}: arbitrary variable expressions ({}) not yet supported",
+                                                    callee.name, isr.name, isr.id, var
                                                 ),
                                             ));
                                         }

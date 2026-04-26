@@ -27,7 +27,7 @@ ISR              := SKIP_WHITE KEYWORD_ISR Identifier IsrID RingLevel? IsrBody
 
 IsrID            := SKIP_WHITE LEFT_PAREN SKIP_WHITE [0-255] SKIP_WHITE RIGHT_PAREN SKIP_WHITE
 
-IsrBody          := SKIP_WHITE LEFT_BRACKET SKIP_WHITE CallExpression*
+IsrBody          := SKIP_WHITE LEFT_BRACKET SKIP_WHITE CallExpression* RIGHT_BRACKET
 
 CallExpression   := KEYWORD_CALL Identifier LEFT_PAREN ArgValList* RIGHT_PAREN
 
