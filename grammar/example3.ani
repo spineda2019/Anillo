@@ -1,0 +1,7 @@
+extern Foo()
+
+extern  IHaveWeirdSpaces  (  )
+
+extern   IHaveArgsAndSpaces(u8 foo, i32 bar)
+
+extern   IAmUserAccessable(u8 foo, i32 bar)   WithLevel( User)
