@@ -27,16 +27,25 @@ impl CompilationError {
 
 impl std::fmt::Debug for CompilationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        const EMPTY: String = String::new();
         write!(
             f,
-            "CompilationError: {{line = {}, column = {}, diagnostic = {}}}{}",
-            self.line,
-            self.column,
+            "CompilationError: \n{}{}{}{}",
+            if self.src_available {
+                format!("line = {}, ", self.line)
+            } else {
+                EMPTY
+            },
+            if self.src_available {
+                format!("column = {}, ", self.column)
+            } else {
+                EMPTY
+            },
             self.diagnostic,
             if self.src_available {
                 ""
             } else {
-                "\n(Source info unavaliable)"
+                "\n(line info unavaliable)"
             }
         )
     }

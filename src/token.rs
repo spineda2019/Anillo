@@ -148,14 +148,22 @@ impl Ord for Ring {
     where
         Self: Sized,
     {
-        if self.gt(&other) { self } else { other }
+        if self.gt(&other) {
+            self
+        } else {
+            other
+        }
     }
 
     fn min(self, other: Self) -> Self
     where
         Self: Sized,
     {
-        if self.lt(&other) { self } else { other }
+        if self.lt(&other) {
+            self
+        } else {
+            other
+        }
     }
 
     fn clamp(self, _min: Self, _max: Self) -> Self
@@ -379,7 +387,7 @@ impl Ast {
 
                                 if isr_privilege < callee_privilege {
                                     return Err(CompilationError::new_without_src_info(format!(
-                                        "Attemt to call higher privilege function ({}) from lower privilege ISR ({})",
+                                        "Attempt to call higher privilege function ({}) from lower privilege ISR ({})",
                                         callee.name, isr.name
                                     )));
                                 }
