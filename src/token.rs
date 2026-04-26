@@ -148,22 +148,14 @@ impl Ord for Ring {
     where
         Self: Sized,
     {
-        if self.gt(&other) {
-            self
-        } else {
-            other
-        }
+        if self.gt(&other) { self } else { other }
     }
 
     fn min(self, other: Self) -> Self
     where
         Self: Sized,
     {
-        if self.lt(&other) {
-            self
-        } else {
-            other
-        }
+        if self.lt(&other) { self } else { other }
     }
 
     fn clamp(self, _min: Self, _max: Self) -> Self
