@@ -10,12 +10,14 @@ Ingot            := ExternalFunction | ISR
 
 ExternalFunction := SKIP_WHITE KEYWORD_EXTERN FunctionDecl RingLevel?
 
-FunctionDecl     := Identifier LEFT_PAREN ArgList* RIGHT_PAREN
+FunctionDecl     := Identifier LEFT_PAREN ArgList? RIGHT_PAREN
 
 Identifier       := SKIP_WHITE [A-Za-z_][A-Za-z0-9_]* SKIP_WHITE
 
 ArgList          := SKIP_WHITE CType SKIP_WHITE Identifier RemainingList*
 RemainingList    := SKIP_WHITE COMMA ArgList
+
+CType            := U8 | I8 | U16 | I16 | U32 | I32 | U64 | I64
 
 RingLevel        := KEYWORD_RING_LEVEL LEFT_PAREN RingName RIGHT_PAREN
 
@@ -23,7 +25,7 @@ RingName         := KEYWORD_USER | KEYWORD_SUPER
 
 ISR              := SKIP_WHITE KEYWORD_ISR Identifier IsrID RingLevel? IsrBody
 
-IsrID            := SKIP_WHITE LEFT_PARENT SKIPWHITE [0-255] SKIPWHITE RIGHT_PAREN SKIP_WHITE
+IsrID            := SKIP_WHITE LEFT_PAREN SKIP_WHITE [0-255] SKIP_WHITE RIGHT_PAREN SKIP_WHITE
 
 IsrBody          := SKIP_WHITE LEFT_BRACKET SKIP_WHITE CallExpression*
 
