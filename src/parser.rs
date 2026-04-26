@@ -18,18 +18,24 @@ impl Parser {
         Parser { tokens }
     }
 
-    pub fn run(&mut self) -> Result<Ast, Box<dyn Error>> {
+    pub fn run(&mut self, verbose: bool) -> Result<Ast, Box<dyn Error>> {
         let mut ast_vec: Vec<Ingot> = Vec::new();
 
         while let Some(token) = self.tokens.pop_front() {
-            println!("###########################################################################");
-            println!("Consumed token: {}", token);
-            println!("Remaining tokens:");
-            dbg!(&self.tokens);
-            println!("AST in progress:");
-            dbg!(&ast_vec);
-            println!();
-            println!("###########################################################################");
+            if verbose {
+                println!(
+                    "###########################################################################"
+                );
+                println!("Consumed token: {}", token);
+                println!("Remaining tokens:");
+                dbg!(&self.tokens);
+                println!("AST in progress:");
+                dbg!(&ast_vec);
+                println!();
+                println!(
+                    "###########################################################################"
+                );
+            }
 
             match token.borrow_token() {
                 Token::KeywordExtern => {
