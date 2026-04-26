@@ -35,9 +35,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         && let Some(ext_str) = ext.to_str()
         && ext_str == "ani"
     {
-        println!("Parsing input: {:?}", input_file);
+        println!("Parsing input: {}", input_file.display());
     } else {
-        eprintln!("Not an anillo file ending in '.ani': {:?}", input_file);
+        eprintln!(
+            "Not an anillo file ending in '.ani': {}",
+            input_file.display()
+        );
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
             "Not an anillo file ending in '.ani'",
@@ -73,6 +76,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     ast.verify()?;
+    println!("{} passed verification!", input_file.display());
 
     Ok(())
 }

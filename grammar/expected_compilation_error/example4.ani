@@ -2,5 +2,5 @@ extern Foo()
 
 extern  IHaveWeirdSpaces  (  )
 
-isr KeyboardIsr(18) {
+isr KeyboardIsr {
 }
