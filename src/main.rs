@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, error::Error};
 
-use argparse::{ArgumentParser, Store};
+use argparse::{ArgumentParser, Store, StoreTrue};
 
 mod error;
 mod lexer;
@@ -13,6 +13,8 @@ use crate::token::TokenInfo;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut input_file = std::path::PathBuf::new();
+    let mut verbose: bool = false;
+
     {
         let mut arg_parser: ArgumentParser = ArgumentParser::new();
         arg_parser.set_description("Parse your Anillo file");
@@ -20,6 +22,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             .refer(&mut input_file)
             .add_argument("input", Store, "anillo file to parse")
             .required();
+        arg_parser.refer(&mut verbose).add_option(
+            &["--verbose"],
+            StoreTrue,
+            "Print in progress Lexer, parser, and AST state",
+        );
 
         arg_parser.parse_args_or_exit();
     }
@@ -28,9 +35,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         && let Some(ext_str) = ext.to_str()
         && ext_str == "ani"
     {
-        println!("Parsing input: {:?}", input_file);
+        println!("Parsing input: {}", input_file.display());
     } else {
-        eprintln!("Not an anillo file ending in '.ani': {:?}", input_file);
+        eprintln!(
+            "Not an anillo file ending in '.ani': {}",
+            input_file.display()
+        );
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
             "Not an anillo file ending in '.ani'",
@@ -41,17 +51,32 @@ fn main() -> Result<(), Box<dyn Error>> {
     let tokens: VecDeque<TokenInfo> = lexer.tokenize()?;
     let mut parser = Parser::new(tokens);
 
-    println!("********************************************************************************");
-    println!("Starting token buffer:");
-    dbg!(&parser);
-    println!("********************************************************************************");
+    if verbose {
+        println!(
+            "********************************************************************************"
+        );
+        println!("Starting token buffer:");
+        dbg!(&parser);
+        println!(
+            "********************************************************************************"
+        );
+    }
 
-    let ast = parser.run()?;
+    let ast = parser.run(verbose)?;
 
-    println!("********************************************************************************");
-    println!("Final AST:");
-    dbg!(&ast);
-    println!("********************************************************************************");
+    if verbose {
+        println!(
+            "********************************************************************************"
+        );
+        println!("Final AST:");
+        dbg!(&ast);
+        println!(
+            "********************************************************************************"
+        );
+    }
+
+    ast.verify()?;
+    println!("{} passed verification!", input_file.display());
 
     Ok(())
 }
