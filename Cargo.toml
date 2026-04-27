@@ -7,6 +7,8 @@ license = "GPL-3.0-only"
 description = "Parser (and possibly other things) for the Anillo DSL"
 readme = "README.md"
 repository = "https://github.com/spineda2019/Anillo"
+homepage = "https://spineda2019.github.io/Anillo/anillo/"
+documentation = "https://spineda2019.github.io/Anillo/anillo/"
 
 [dependencies]
 argparse = "0.2.2"
