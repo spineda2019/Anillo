@@ -1,3 +1,8 @@
+//! The Anillo Compiler
+//!
+//! The Anillo compiler serves as the currently (Work In Progress) reference implementation
+//! of the Anillo Language.
+
 use std::{collections::VecDeque, error::Error};
 
 use argparse::{ArgumentParser, Store, StoreTrue};
@@ -8,9 +13,20 @@ mod parser;
 mod token;
 
 use parser::Parser;
+use token::TokenInfo;
 
-use crate::token::TokenInfo;
-
+/// The main just parses command line args and drives the lexer, parser, and AST
+/// validator.
+///
+/// # Arguments
+/// * **_input_**
+///   Single positional argument that dictates the .ani Anillo file to parse
+/// * **_--verbose_**
+///   Enables in-progress printing of the AST as it is being built as
+///   well as other useful information as the compiler runs (such as
+///   the initial token buffer produced by the lexer)
+/// * **_-h_** or **_--help_**
+///   Prints command line help
 fn main() -> Result<(), Box<dyn Error>> {
     let mut input_file = std::path::PathBuf::new();
     let mut verbose: bool = false;
