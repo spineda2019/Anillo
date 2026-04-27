@@ -45,9 +45,7 @@ rigorious (than the official paper at least) more "engineering" focused
 reference grammar in Backus-Naur Form.
 
 ## TODO
-* Create homepage to host on github
-    * Generate with cargo docs
-    * List in Cargo.toml
+* Create CI step that ensures FOSS licenses are properly followed
 
 ## Branch organization
 Branch names don't really matter, but this repo will try its best at allowing
