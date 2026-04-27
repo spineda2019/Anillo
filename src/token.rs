@@ -1,7 +1,18 @@
+//! This module provides definitions for the fundamental types used in a
+//! traditional compiler.
+//!
+//! This includes items such as Tokens, AST Nodes, and the AST itself. These
+//! definitions are meant to be able to be passed around between compilation
+//! stages (such as between lexing, parsing, and AST validation). The types
+//! that may exist on their own (such as the Lexer and Parser) exist in their
+//! own modules
+
 use std::iter::zip;
 
 use crate::error::CompilationError;
 
+/// The fundamental unit of a source code file. These are used to represent
+/// the _lexemes_ within a source file
 #[derive(Debug)]
 pub enum Token {
     KeywordExtern,
@@ -22,6 +33,9 @@ pub enum Token {
     Dollar,
 }
 
+/// A small wrapper around a `Token` that also contains line and column info.
+/// This just lets the lexer and parser output meaningful error messages so
+/// a user knows where a mistake may have been made.
 #[derive(Debug)]
 pub struct TokenInfo {
     token: Token,
@@ -34,6 +48,7 @@ impl TokenInfo {
         TokenInfo { token, line, col }
     }
 
+    /// Simply used to directly pattern match on the internal `token` field.
     pub fn borrow_token(&self) -> &Token {
         &self.token
     }
@@ -76,6 +91,7 @@ impl std::fmt::Display for Token {
     }
 }
 
+/// Represents a privilege level of an external function or an ISR
 #[derive(Debug, Clone, Copy)]
 pub enum Ring {
     Super,
@@ -179,7 +195,7 @@ impl std::fmt::Display for Ring {
     }
 }
 
-/// Some power of 2 in the rang [8-64] inclusive
+/// Some power of 2 in the range [8-64] inclusive
 #[derive(Debug, Clone, Copy)]
 pub enum FuncArgType {
     U8,
