@@ -38,6 +38,12 @@ open them in your browser, simply run:
 cargo doc --open
 ```
 
+## Formal Definitions
+The `grammar` folder contains a suite of Anillo files used for testing (sadly,
+this is not yet done automatically in CI, but maybe one day), as well as a less
+rigorious (than the official paper at least) more "engineering" focused
+reference grammar in Backus-Naur Form.
+
 ## TODO
 * Create homepage to host on github
     * Generate with cargo docs
