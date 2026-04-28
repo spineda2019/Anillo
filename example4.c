@@ -25,12 +25,30 @@ struct AnilloIDTDescriptor {
 
 extern void GenericPicHandler(u8 irq);
 
-
-
+void AnilloISR16() __attribute__((naked));
+void AnilloISR16() {
+    GenericPicHandler(16);
+}
+void AnilloISR17() __attribute__((naked));
+void AnilloISR17() {
+    GenericPicHandler(17);
+}
 
 void AnilloISRRegister() {
     static volatile struct AnilloGateDescriptor idt[256];
-    
+    idt[16] = (struct AnilloGateDescriptor) {
+    .addr_l = ((u32) AnilloISR16 & 0xF),
+    .seg_sel = 0x8,
+    .attributes = 0b10001110,
+    .addr_h = ((u32) AnilloISR16 >> 16)
+};
+idt[17] = (struct AnilloGateDescriptor) {
+    .addr_l = ((u32) AnilloISR17 & 0xF),
+    .seg_sel = 0x8,
+    .attributes = 0b10001110,
+    .addr_h = ((u32) AnilloISR17 >> 16)
+};
+
 
     static volatile struct AnilloIDTDescriptor idtd = {255, (u32) &idt};
     asm volatile (

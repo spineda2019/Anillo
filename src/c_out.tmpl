@@ -24,9 +24,7 @@ struct AnilloIDTDescriptor {
 };
 
 {external_funcs}
-
 {isr_funcs}
-
 void AnilloISRRegister() {
     static volatile struct AnilloGateDescriptor idt[256];
     {gate_descriptors}

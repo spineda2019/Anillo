@@ -251,8 +251,8 @@ pub enum CallArg {
 
 #[derive(Debug)]
 pub struct ExternalFunctionCall {
-    name: String,
-    args: Vec<CallArg>,
+    pub name: String,
+    pub args: Vec<CallArg>,
 }
 
 impl ExternalFunctionCall {
