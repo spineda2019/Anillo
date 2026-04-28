@@ -3,17 +3,20 @@
 //! The Anillo compiler serves as the currently (Work In Progress) reference implementation
 //! of the Anillo Language.
 
-use std::{collections::VecDeque, error::Error};
+use std::{collections::VecDeque, error::Error, fs::File};
 
-use argparse::{ArgumentParser, Store, StoreTrue};
+use argparse::{ArgumentParser, Store, StoreTrue, StoreOption};
 
 mod error;
 mod lexer;
 mod parser;
 mod token;
+mod compilerc;
 
 use parser::Parser;
 use token::TokenInfo;
+
+use crate::compilerc::CompilerC;
 
 /// The main just parses command line args and drives the lexer, parser, and AST
 /// validator.
@@ -30,6 +33,7 @@ use token::TokenInfo;
 fn main() -> Result<(), Box<dyn Error>> {
     let mut input_file = std::path::PathBuf::new();
     let mut verbose: bool = false;
+    let mut output_file: Option<String> = None;
 
     {
         let mut arg_parser: ArgumentParser = ArgumentParser::new();
@@ -42,6 +46,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             &["--verbose"],
             StoreTrue,
             "Print in progress Lexer, parser, and AST state",
+        );
+        arg_parser.refer(&mut output_file).add_option(
+            &["--comp"],
+            StoreOption,
+            "File name to store compiled C code for ISR registration",
         );
 
         arg_parser.parse_args_or_exit();
@@ -89,6 +98,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!(
             "********************************************************************************"
         );
+    }
+
+    if let Some(filename) = output_file {
+        let mut compiler = CompilerC::new(filename, &ast);
+        compiler.compile();
     }
 
     ast.verify()?;

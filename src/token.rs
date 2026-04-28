@@ -7,7 +7,7 @@
 //! that may exist on their own (such as the Lexer and Parser) exist in their
 //! own modules
 
-use std::iter::zip;
+use std::{iter::zip, slice::Iter};
 
 use crate::error::CompilationError;
 
@@ -211,10 +211,10 @@ pub enum FuncArgType {
 #[derive(Debug)]
 pub struct FuncArg {
     /// TODO(SEP): Do something with the func arg name when we have arbitrary arg usage
-    _name: String,
+    pub _name: String,
 
     /// `type` is likely reserved by the rust language for use so I can't use the darn name
-    type_t: FuncArgType,
+    pub type_t: FuncArgType,
 }
 
 impl FuncArg {
@@ -228,9 +228,9 @@ impl FuncArg {
 
 #[derive(Debug)]
 pub struct ExternalFunctionNode {
-    name: String,
-    args: Vec<FuncArg>,
-    privilege: Option<Ring>,
+    pub name: String,
+    pub args: Vec<FuncArg>,
+    pub privilege: Option<Ring>,
 }
 
 impl ExternalFunctionNode {
@@ -263,10 +263,10 @@ impl ExternalFunctionCall {
 
 #[derive(Debug)]
 pub struct IsrNode {
-    name: String,
-    id: u8,
-    privilege: Option<Ring>,
-    calling_func: Option<ExternalFunctionCall>,
+    pub name: String,
+    pub id: u8,
+    pub privilege: Option<Ring>,
+    pub calling_func: Option<ExternalFunctionCall>,
 }
 
 impl IsrNode {
@@ -413,5 +413,9 @@ impl Ast {
         }
 
         Ok(())
+    }
+
+    pub fn asVec(&self) -> &Vec<Ingot> {
+        &self.0
     }
 }
