@@ -1,3 +1,6 @@
+//! Basic type definitions and implementations for the lexing of an Anillo
+//! source file.
+
 use std::{collections::VecDeque, error::Error, io::Read, str::FromStr};
 
 use crate::{
@@ -5,6 +8,12 @@ use crate::{
     token::{Ring, Token, TokenInfo},
 };
 
+/// The Anillo Lexer
+///
+/// The Anillo Lexer is purposefully simple. Lexemes (or Tokens here) are only
+/// delimited by whitespace and "Special Characters" (these are defined in the
+/// techincal specification, but generally punctuation like brackets, or special
+/// semantic tokens like '$' count as "Special Characters")
 pub struct Lexer {
     file: std::io::BufReader<std::fs::File>,
 }
@@ -17,6 +26,13 @@ impl Lexer {
         })
     }
 
+    /// Eagerly lex the ModuleSource and return a buffer of `TokenInfo`s to the
+    /// caller.
+    ///
+    /// Lexing here is done as simply as possible (and the language was designed
+    /// with this in mind). There should be absolutely no look ahead peeking
+    /// done at this level. Compilation errors at this level are supported, but
+    /// rare (only really possible if an invalid unicode character is found).
     pub fn tokenize(&mut self) -> Result<VecDeque<TokenInfo>, Box<dyn Error>> {
         let mut tokens: VecDeque<TokenInfo> = VecDeque::new();
         let mut buf: [u8; 1] = [0; 1];
@@ -92,6 +108,13 @@ impl Lexer {
         Ok(tokens)
     }
 
+    /// Helper function for `tokenize`.
+    ///
+    /// Essentially anything that isn't a Special Character will be lexed here.
+    /// Where possible, we will store the lexeme in a rich token type (Like
+    /// keywords). Everything else however will be parsed as identifiers (even
+    /// numbers). The parser handles converting these to their expected types at
+    /// AST generation time in `parser.rs`
     fn parse_str(tok: &str) -> Token {
         match tok {
             "extern" => Token::KeywordExtern,

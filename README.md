@@ -44,8 +44,14 @@ this is not yet done automatically in CI, but maybe one day), as well as a less
 rigorious (than the official paper at least) more "engineering" focused
 reference grammar in Backus-Naur Form.
 
+Files under `grammar\expected_to_work\` are appropriately expected to pass
+lexing, parsing, and AST validation. Similarly, those under
+`grammar\expected_compilation_errors\` are used to test expected compilation
+failures (either at the syntactic or semantic level).
+
 ## TODO
 * Create CI step that ensures FOSS licenses are properly followed
+* Incorporate grammar tests in CI
 
 ## Branch organization
 Branch names don't really matter, but this repo will try its best at allowing

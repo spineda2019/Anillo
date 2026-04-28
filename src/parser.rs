@@ -1,3 +1,5 @@
+//! Types and implementations for parsing a pre-built Token buffer.
+
 use std::{collections::VecDeque, error::Error};
 
 use crate::{
@@ -8,6 +10,17 @@ use crate::{
     },
 };
 
+/// The Anillo Parser
+///
+/// The parser lives at a slightly higher level than the lexer. At this level,
+/// We can begin to do some additional reasoning about the program as we build
+/// the AST (see `AST`).
+///
+/// The parse_* methods of this struct are each intended to be called **_only_**
+/// when its caller has determined that it must succeed (either due to the
+/// grammar mandating it, or a peek that indicated an optional token was found).
+/// When these functions fail, this thus causes the whole compilation to fail
+/// with a diagnostic.
 #[derive(Debug)]
 pub struct Parser {
     tokens: VecDeque<TokenInfo>,
@@ -18,6 +31,13 @@ impl Parser {
         Parser { tokens }
     }
 
+    /// Generates the AST from a `TokenInfo` buffer input
+    ///
+    /// Since we have been fed rich token info from the lexer at this point,
+    /// we can model the grammar closely here (no need to worry about whitespace!).
+    /// Every token type has a very small set of expected token types that may
+    /// appear next, which makes a combinator style (as-in what was shown in
+    /// class) of failure easy to detect.
     pub fn run(&mut self, verbose: bool) -> Result<Ast, Box<dyn Error>> {
         let mut ast_vec: Vec<Ingot> = Vec::new();
 
@@ -59,6 +79,7 @@ impl Parser {
         Ok(Ast::new(ast_vec))
     }
 
+    /// Parse info about an external function declaration
     fn parse_extern(
         &mut self,
         last_line: u32,
@@ -120,6 +141,7 @@ impl Parser {
         }
     }
 
+    /// Parse info about the valid args in an external function declaration
     fn parse_func_args(&mut self) -> Result<Vec<FuncArg>, CompilationError> {
         #[derive(Clone, Copy)]
         enum SeekState {
@@ -189,6 +211,11 @@ impl Parser {
         Ok(args)
     }
 
+    /// Parse a found (optional) RingLevel expression.
+    ///
+    /// ExternalFunctions and ISRs that do not find 'WithLevel' won't call this,
+    /// and the AST validator will interpret the None variant of an Option<Ring>
+    /// as implicitly meaning the Super privilege.
     fn parse_withlevel(
         &mut self,
         last_line: u32,
@@ -258,6 +285,7 @@ impl Parser {
         }
     }
 
+    /// Parse info about a defined isr
     fn parse_isr(&mut self, last_line: u32, last_column: u32) -> Result<IsrNode, CompilationError> {
         match self.tokens.pop_front() {
             Some(name) => match name.borrow_token() {
@@ -351,6 +379,11 @@ impl Parser {
         }
     }
 
+    /// Parse the collection of functions called from within the ISR.
+    ///
+    /// An ISR may only call functions (and those functions must be declared
+    /// with the 'extern' keyword as well). It may call 0 or 1 at the moment,
+    /// but this may be expanded in the future.
     fn parse_isr_body(
         &mut self,
         last_line: u32,
@@ -390,6 +423,11 @@ impl Parser {
         }
     }
 
+    /// Parse the known-to-exist function called from within the ISR.
+    ///
+    /// This will be called from `parse_isr_body` if and only if it has peeked
+    /// ahead and determined a call exists (as calls are optional). Thus,
+    /// failures here are still universally treated as hard compilation errors.
     fn parse_function_call(
         &mut self,
         last_line: u32,
