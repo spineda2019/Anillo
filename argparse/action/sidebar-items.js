@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Action","ParseResult"],"trait":["IArgAction","IArgsAction","IFlagAction","TypedAction"]};

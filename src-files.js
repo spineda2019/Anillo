@@ -1,0 +1,2 @@
+createSrcSidebar('[["anillo",["",[],["error.rs","lexer.rs","main.rs","parser.rs","token.rs"]]],["argparse",["",[],["action.rs","bool.rs","custom.rs","from_cli.rs","generic.rs","help.rs","lib.rs","num.rs","parser.rs","print.rs"]]]]');
+//{"start":19,"fragment_lengths":[75,135]}
