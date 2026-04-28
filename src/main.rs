@@ -28,8 +28,8 @@ use crate::compilerc::CompilerC;
 ///   Enables in-progress printing of the AST as it is being built as
 ///   well as other useful information as the compiler runs (such as
 ///   the initial token buffer produced by the lexer)
-/// * **_--comp <filename>_**
-///   \<UNFINISHED> Produces C header and source files containing a function _AnilloISRRegister()_ which initializes and registers the described IDT from the Anillo source
+/// * **_--comp \<filename>_**
+///   Produces 2 C files, _\<filename>.h_ and _\<filename>.c_, which declare and define a function _AnilloISRRegister()_ that initializes and registers the described IDT from the Anillo source \<UNFINISHED> 
 /// * **_-h_** or **_--help_**
 ///   Prints command line help
 fn main() -> Result<(), Box<dyn Error>> {
