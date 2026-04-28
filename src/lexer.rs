@@ -1,3 +1,6 @@
+//! Basic type definitions and implementations for the lexing of an Anillo
+//! source file.
+
 use std::{collections::VecDeque, error::Error, io::Read, str::FromStr};
 
 use crate::{

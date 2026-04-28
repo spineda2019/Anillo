@@ -1,3 +1,5 @@
+//! Types and implementations for parsing a pre-built Token buffer.
+
 use std::{collections::VecDeque, error::Error};
 
 use crate::{
