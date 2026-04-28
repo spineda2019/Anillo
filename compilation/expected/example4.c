@@ -20,10 +20,11 @@ struct AnilloIDTDescriptor {
 
 extern void GenericPicHandler(u8 irq);
 
+void AnilloISR16() __attribute__((naked));
 void AnilloISR16() {
     GenericPicHandler(16);
 }
-
+void AnilloISR17() __attribute__((naked));
 void AnilloISR17() {
     GenericPicHandler(17);
 }

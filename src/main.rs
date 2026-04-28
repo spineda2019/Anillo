@@ -3,7 +3,7 @@
 //! The Anillo compiler serves as the currently (Work In Progress) reference implementation
 //! of the Anillo Language.
 
-use std::{collections::VecDeque, error::Error, fs::File};
+use std::{collections::VecDeque, error::Error};
 
 use argparse::{ArgumentParser, Store, StoreTrue, StoreOption};
 
@@ -100,13 +100,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         );
     }
 
-    if let Some(filename) = output_file {
-        let mut compiler = CompilerC::new(filename, &ast);
-        compiler.compile();
-    }
-
     ast.verify()?;
     println!("{} passed verification!", input_file.display());
+
+
+    if let Some(filename) = output_file {
+        let compiler = CompilerC::new(&filename, &ast, compilerc::Target::IA32);
+        compiler.compile()?;
+        println!("C code written to {0}.h and {0}.c", &filename);
+    }
 
     Ok(())
 }

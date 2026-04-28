@@ -7,7 +7,7 @@
 //! that may exist on their own (such as the Lexer and Parser) exist in their
 //! own modules
 
-use std::{iter::zip, slice::Iter};
+use std::{iter::zip};
 
 use crate::error::CompilationError;
 
