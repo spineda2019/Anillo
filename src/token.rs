@@ -414,8 +414,14 @@ impl Ast {
 
         Ok(())
     }
+}
 
-    pub fn asVec(&self) -> &Vec<Ingot> {
-        &self.0
+impl<'a> IntoIterator for &'a Ast{
+    type Item = &'a Ingot;
+
+    type IntoIter = std::slice::Iter<'a, Ingot>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
     }
 }

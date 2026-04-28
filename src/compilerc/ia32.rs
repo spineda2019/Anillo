@@ -31,7 +31,7 @@ impl <'a> IA32<'a> {
 
     fn gen_extern_funcs(&self) -> String {
         let mut out_string = String::new();
-        for val in self.ast.asVec() {
+        for val in self.ast {
             if let Ingot::ExternalFunction(ef_node) = val {
                 out_string += &EXTERN_FUNC_TEMPLATE
                     .replace("{func_name}", &ef_node.name)
@@ -67,7 +67,7 @@ impl <'a> IA32<'a> {
 
     fn gen_isr_funcs(&self) -> String {
         let mut out_string = String::new();
-        for val in self.ast.asVec() {
+        for val in self.ast {
             if let Ingot::Isr(isr_node) = val {
                 out_string += &ISR_FUNC_TEMPLATE
                     .replace("{body}", &self.gen_isr_body(isr_node))
@@ -105,7 +105,7 @@ impl <'a> IA32<'a> {
 
     fn gen_gate_descriptors(&self) -> String {
         let mut out_string = String::new();
-        for val in self.ast.asVec() {
+        for val in self.ast {
             if let Ingot::Isr(isr_node) = val {
                 out_string += &GATE_DESCRIPTOR_TEMPLATE
                     .replace("{isr_id}", &isr_node.id.to_string())
