@@ -4,13 +4,13 @@ use crate::error::CompilationError;
 use crate::token::{Ast, ExternalFunctionCall, ExternalFunctionNode, FuncArgType, Ingot, IsrNode, CallArg, Ring};
 use crate::compilerc::CompileC;
 
-pub struct IA32<'a> {
+pub struct X86<'a> {
     filename: String,
     ast: &'a Ast
 }
 
 
-impl CompileC for IA32<'_> {
+impl CompileC for X86<'_> {
     fn compile(&self) -> Result<(), CompilationError> {
         let mut c_file = File::create(self.filename.clone() + ".c").expect("Failed to create file");
         let mut h_file = File::create(self.filename.clone() + ".h").expect("Failed to create file");
@@ -23,10 +23,10 @@ impl CompileC for IA32<'_> {
     }
 }
 
-impl <'a> IA32<'a> {
+impl <'a> X86<'a> {
 
-    pub fn new(filename_in: &String, ast: &'a Ast) -> IA32<'a> {
-        IA32 {filename: filename_in.clone(), ast: ast}
+    pub fn new(filename_in: &String, ast: &'a Ast) -> X86<'a> {
+        X86 {filename: filename_in.clone(), ast: ast}
     }
 
     fn gen_extern_funcs(&self) -> String {
@@ -124,7 +124,7 @@ impl <'a> IA32<'a> {
     }
 
     fn gen_cfile(&self) -> String {
-        include_str!("ia32.tmpl")
+        include_str!("x86.tmpl")
             .replace("{filename}", &self.filename)
             .replace("{external_funcs}", &self.gen_extern_funcs())
             .replace("{isr_funcs}", &&self.gen_isr_funcs())
@@ -143,8 +143,10 @@ void AnilloISR{isr_id}() {
 
 const GATE_DESCRIPTOR_TEMPLATE: &str = "\
 idt[{isr_id}] = (struct AnilloGateDescriptor) {
-    .addr_l = ((u32) AnilloISR{isr_id} & 0xF),
+    .addr_l = ((u64) AnilloISR{isr_id} & 0xF),
     .seg_sel = 0x8,
+    .ist = 0x0,
     .attributes = 0b1{privilege_bits}01110,
-    .addr_h = ((u32) AnilloISR{isr_id} >> 16)
+    .addr_m = ((u64) AnilloISR{isr_id} >> 16) & 0xF,
+    .addr_h = ((u64) AnilloISR{isr_id} >> 32)
 };\n";

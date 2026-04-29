@@ -1,6 +1,7 @@
-use crate::{compilerc::ia32::IA32, error::CompilationError, token::Ast};
+use crate::{compilerc::{ia32::IA32, x86::X86}, error::CompilationError, token::Ast};
 
 mod ia32;
+mod x86;
 
 #[derive(Debug)]
 pub enum Target {
@@ -22,6 +23,7 @@ impl <'a> CompilerC<'a> {
         CompilerC {backend: 
         match target {
             Target::IA32 => Box::from(IA32::new(&filename_in, ast)),
+            Target::X86_64 => Box::from(X86::new(&filename_in, ast)),
             _ => Box::from(NoBackend {backend_type: target}),
         }}
         

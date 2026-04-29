@@ -107,7 +107,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
     if let Some(filename) = output_file {
-        let compiler = CompilerC::new(&filename, &ast, compilerc::Target::IA32);
+        let compiler = CompilerC::new(&filename, &ast, compilerc::Target::X86_64);
         compiler.compile()?;
         println!("C code written to {0}.h and {0}.c", &filename);
     }

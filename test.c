@@ -13,14 +13,16 @@ typedef __int64_t i64;
 struct __attribute__((packed)) AnilloGateDescriptor {
     u16 addr_l;
     u16 seg_sel;
-    u8 reserved;
+    u8 ist;
     u8 attributes;
-    u16 addr_h;
+    u16 addr_m;
+    u32 addr_h;
+    u32 reserved;
 };
 
 struct AnilloIDTDescriptor {
     u16 size;
-    u32 addr;
+    u64 addr;
 };
 
 extern void GenericPicHandler(u8 irq);
@@ -37,20 +39,24 @@ void AnilloISR17() {
 void AnilloISRRegister() {
     static volatile struct AnilloGateDescriptor idt[256];
     idt[16] = (struct AnilloGateDescriptor) {
-    .addr_l = ((u32) AnilloISR16 & 0xF),
+    .addr_l = ((u64) AnilloISR16 & 0xF),
     .seg_sel = 0x8,
+    .ist = 0x0,
     .attributes = 0b10001110,
-    .addr_h = ((u32) AnilloISR16 >> 16)
+    .addr_m = ((u64) AnilloISR16 >> 16) & 0xF,
+    .addr_h = ((u64) AnilloISR16 >> 32)
 };
 idt[17] = (struct AnilloGateDescriptor) {
-    .addr_l = ((u32) AnilloISR17 & 0xF),
+    .addr_l = ((u64) AnilloISR17 & 0xF),
     .seg_sel = 0x8,
+    .ist = 0x0,
     .attributes = 0b10001110,
-    .addr_h = ((u32) AnilloISR17 >> 16)
+    .addr_m = ((u64) AnilloISR17 >> 16) & 0xF,
+    .addr_h = ((u64) AnilloISR17 >> 32)
 };
 
 
-    static volatile struct AnilloIDTDescriptor idtd = {255, (u32) &idt};
+    static volatile struct AnilloIDTDescriptor idtd = {255, &idt};
     asm volatile (
         "lidtl %0"
         :
